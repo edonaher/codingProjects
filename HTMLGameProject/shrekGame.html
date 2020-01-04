@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<head>
+<title>Pyramid</title>
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script src="KeyboardState.js"></script>
+<!-- Modified from the MeshFaceMaterial.html example in our textbook 
+    (Introduction to Computer Graphics) by David J. Eck -->
+
+<script>
+    //I DID NOT COLLABORATE WITH ANYONE ON THIS ASSIGNMENT
+    var scene, camera, renderer; // Three.js rendering basics.
+    var counter = 0;
+    var canvas; // The canvas on which the image is rendered.
+    var shrekBodyObj;
+    var shrekLegObj;
+    var gingyObj;
+    var scoreText;
+    var shrekx;
+    var shrekz;
+    var counter = 50
+    //container to hold our gltf objects
+    var shrekContainer = new THREE.Object3D();
+
+    // Create the scene. This function is called once, as soon as the page loads.
+    // The renderer has already been created before this function is called.
+    function createWorld() {
+        
+        renderer.setClearColor(0); // Set background color (0, or 0x000000, is black).
+        scene = new THREE.Scene(); // Create a new scene which we can add objects to.
+
+        createEnvironment()
+        loadChars();       
+    }
+
+        function createEnvironment(){
+                    // create a camera, sitting on the positive z-axis.  The camera is not part of the scene.
+        var fov = 100;   // angular field of view
+        var aspect = 500/300;  // from canvas
+        var near = 1;
+        var far = -50;
+        var z_pos = 100
+        camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        camera.position.z = z_pos;
+        camera.position.y = 60
+        camera.rotation.x -= .5
+
+
+        // create some lights and add them to the scene.
+        // dim light shining from above
+        // scene.add( new THREE.DirectionalLight( 0xffffff, 0.5 ) );
+
+        // a light to shine in the direction the camera faces
+        var viewpointLight = new THREE.DirectionalLight( 0xffffff, 0.8 );  
+        viewpointLight.position.set(0,0,1);  // shines down the z-axis
+        scene.add(viewpointLight);
+
+        //         // a light to shine in the direction the camera faces
+        // var viewpointLight2 = new THREE.DirectionalLight( 0xffffff, 0.5 );  
+        // viewpointLight2.position.set(0,1,1);  // shines down the z-axis
+        // scene.add(viewpointLight2);
+
+        var light = new THREE.AmbientLight( 0x404040, 4 ); // soft white light
+        scene.add( light );
+
+                // arguments are width along the x-axis, then width along y-axis
+        var floorGeom = new THREE.PlaneGeometry( 250, 200 );
+        var geometry = new THREE.PlaneGeometry( 300, 170 );
+        var wallmaterial = new THREE.MeshBasicMaterial({color: 0xffff00, side: THREE.DoubleSide});
+
+
+
+        var loader = new THREE.TextureLoader();
+        // var floortexture = loader.load( 'dirt_floor_texture.jpg' );
+        // floortexture.wrapS = THREE.RepeatWrapping;
+        // floortexture.wrapT = THREE.RepeatWrapping;
+        // floortexture.repeat.set( 4, 4); // twice in u and three times in v
+        // var floormaterial = new THREE.MeshLambertMaterial({ map : floortexture })
+        var groundNormalMaterial = new THREE.MeshLambertMaterial();
+        groundNormalMaterial.map = loader.load("Sand 002_COLOR.jpg");
+        groundNormalMaterial.NormalMap = loader.load("Sand 002_NRM.jpg");
+
+
+       var walltexture = loader.load( 'forest_texture.jpg' );
+        walltexture.wrapS = THREE.RepeatWrapping;
+        walltexture.wrapT = THREE.RepeatWrapping;
+        walltexture.repeat.set( 1, 1); // twice in u and three times in v
+        var wallmaterial = new THREE.MeshLambertMaterial({ map : walltexture })
+
+        var rightwalltexture = loader.load( 'shrek_swamp_text.jpg' );
+        // rightwalltexture.wrapS = THREE.RepeatWrapping;
+        // rightwalltexture.wrapT = THREE.RepeatWrapping;
+        // rightwalltexture.repeat.set( 1, 1); // twice in u and three times in v
+        var rightwallmaterial = new THREE.MeshLambertMaterial({ map : rightwalltexture })
+
+        var floor = new THREE.Mesh( floorGeom, groundNormalMaterial );
+        //just less than 1/2pi on the x axis (don't want it completely flat or it would be invisible!)
+        floor.rotation.x = -Math.PI/2; 
+        scene.add(floor)
+
+        var backWall = new THREE.Mesh( geometry, wallmaterial );
+        backWall.position.set(0,55,-100)
+        scene.add(backWall)
+
+        var rightWall = new THREE.Mesh( geometry, rightwallmaterial );
+        rightWall.rotation.y = 4.7
+        rightWall.position.set(120,65,0)
+        scene.add( rightWall );
+
+        var leftWall = new THREE.Mesh( geometry, wallmaterial );
+        leftWall.rotation.y = -4.7
+        leftWall.position.set(-120,55,0)
+        scene.add( leftWall );
+        }
+        function loadChars() {
+                        // Instantiate a loader
+        var loader = new THREE.GLTFLoader();
+
+        // Load SHREKBODY
+        loader.load(
+            // here is the resource URL.  CHANGE THIS TO YOUR FILE NAME
+            'shreknewbody.glb',
+
+            // function below is called when the resource is loaded
+            function ( gltf ) {
+                //scene.add( gltf.scene );
+                shrekBodyObj = gltf.scene;  // we're making our variable hold the loaded object
+                //add body to container
+                shrekBodyObj.position.y = 16;
+                shrekBodyObj.rotation.y=-4.5
+                shrekContainer.add(shrekBodyObj)
+                gltf.scene.scale.set(5,5,5)
+                gltf.animations; // Array<THREE.AnimationClip>
+                gltf.scene; // THREE.Scene
+                gltf.scenes; // Array<THREE.Scene>
+                gltf.cameras; // Array<THREE.Camera>
+                gltf.asset; // Object
+            },
+            
+            // called while loading is progressing
+            function ( xhr ) {
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+
+            // called when loading has errors
+            function ( error ) {
+                console.log( 'An error happened' );
+            }
+        );
+
+                // Load SHREK LEG
+        loader.load(
+            // here is the resource URL.  CHANGE THIS TO YOUR FILE NAME
+            'shrekleg.glb',
+
+            // function below is called when the resource is loaded
+            function ( gltf ) {
+                //scene.add( gltf.scene );
+                shrekLegObj = gltf.scene;  // we're making our variable hold the loaded object
+                shrekLegObj.position.y = 16;
+                shrekLegObj.rotation.y=-4.5
+                gltf.scene.scale.set(5,5,5)
+                //add leg to container
+                shrekContainer.add(shrekLegObj);
+                gltf.animations; // Array<THREE.AnimationClip>
+                gltf.scene; // THREE.Scene
+                gltf.scenes; // Array<THREE.Scene>
+                gltf.cameras; // Array<THREE.Camera>
+                gltf.asset; // Object
+
+                scene.add(shrekContainer)
+            },
+            
+            // called while loading is progressing
+            function ( xhr ) {
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+
+            // called when loading has errors
+            function ( error ) {
+                console.log( 'An error happened' );
+            }
+        );
+
+         // Load gingy
+        loader.load(
+            // here is the resource URL.  CHANGE THIS TO YOUR FILE NAME
+            'gingy.glb',
+
+            // function below is called when the resource is loaded
+            function ( gltf ) {
+                //scene.add( gltf.scene );
+                gingyObj = gltf.scene;  // we're making our variable hold the loaded object
+                //add body to container
+                gingyObj.position.y = 12;
+                gingyObj.rotation.y=4.5
+                gingyObj.position.z=-3
+                gltf.scene.scale.set(3,3,3)
+                gltf.animations; // Array<THREE.AnimationClip>
+                gltf.scene; // THREE.Scene
+                gltf.scenes; // Array<THREE.Scene>
+                gltf.cameras; // Array<THREE.Camera>
+                gltf.asset; // Object
+                scene.add(gingyObj);
+            },
+            
+            // called while loading is progressing
+            function ( xhr ) {
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+
+            // called when loading has errors
+            function ( error ) {
+                console.log( 'An error happened' );
+            }
+        );
+
+            //shrekBodyObj.postition.y+=10;
+        }//endLoadChars
+    function updateShrek() {
+        var keyboard = new KeyboardState();
+        keyboard.update();
+        shrekLegObj.position.y=16;
+        shrekLegObj.rotation.z=0
+        if ( keyboard.pressed("left") ) {
+            //if we are not already at the wall
+            if(shrekContainer.position.x>-100){
+                shrekContainer.position.x-=1;
+                shrekContainer.rotation.y=-1.5708
+            }
+            
+        }
+        if ( keyboard.pressed("right") ) {
+            if(shrekContainer.position.x<100){
+            shrekContainer.position.x+=1;
+            shrekContainer.rotation.y=1.5708
+            }
+        }
+        if ( keyboard.pressed("down") ) {
+            if(shrekContainer.position.z<75){
+            shrekContainer.position.z+=1;
+            shrekContainer.rotation.y=0
+        }
+        }
+        if ( keyboard.pressed("up") ) {
+            if(shrekContainer.position.z>-75){
+            shrekContainer.position.z-=1;
+            shrekContainer.rotation.y=3.14159
+        }
+        }
+
+        //shrek kicks his leg
+        if (keyboard.pressed("space")){
+            shrekLegObj.rotation.z=-1.5708;
+            shrekLegObj.position.y=10;
+        }
+
+        //if shreks leg z and x match gingy's (they are in collision)
+        shrekx = shrekContainer.position.x
+        shrekz = shrekContainer.position.z
+
+    }//endUpdateShrek
+    //function to control gingerbread movements (random)
+    function moveGing(){
+        if (counter>40){
+            counter = 0
+            rand = Math.floor(Math.random()*4)+1
+        }
+        if(rand==1){
+            if(gingyObj.position.x>-80){
+            gingyObj.position.x-=.8;
+            gingyObj.rotation.y=3.14159
+        }
+        }
+        if(rand==2){
+            if(gingyObj.position.x<80){
+            gingyObj.position.x+=.8;
+            gingyObj.rotation.y=0
+        }
+        }
+        if(rand==3){
+            if(gingyObj.position.z<50){
+            gingyObj.position.z+=.8;
+            gingyObj.rotation.y=-1.5708
+        }
+        }
+        if(rand==4){
+            if(gingyObj.position.z>-70){
+            gingyObj.position.z-=.8;
+            gingyObj.rotation.y=1.5708   
+            }       
+        }
+        counter++
+        //if shrek intersects with gingerbread man- respawn
+        if(shrekz>gingyObj.position.z-6&&shrekz<gingyObj.position.z+6&&shrekx>gingyObj.position.x-6&&shrekx<gingyObj.position.x+6){
+            var newx = Math.floor(Math.random()*50)+1
+            var newz = Math.floor(Math.random()*30)+1
+            var negativex = Math.random()
+            var negativez = Math.random()
+            if(negativex>0.5){
+                newx= newx-(2*newx)
+        }
+            if(negativez>0.5){
+                newz = newz-(2*newz)
+            }
+            gingyObj.position.x = newx
+            gingyObj.position.z = newz
+            }
+    }
+
+
+        function render() {
+            requestAnimationFrame( render );
+            renderer.render(scene, camera);
+            updateShrek()
+            moveGing()
+        }
+
+    //----------------------------------------------------------------------------------
+
+    // The init() function is called by the onload event when the document has loaded.
+    function init() {
+        try {
+            canvas = document.getElementById("glcanvas");
+            renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true} );
+        }
+        catch (e) {
+            document.getElementById("canvas-holder").innerHTML = "<h3><b>WebGL is not available.</b><h3>";
+            return;
+        }
+    
+        // create world and render scene
+        createWorld();
+                //create random pyramids
+        for (i=0; i<20; i++) {
+
+        }//endpyramidfor
+                //values for sun placement
+     //   2,1.5,0.5
+//2,1.5,0.5
+        render();
+    }
+
+</script>
+
+</head>
+<body onload="init()">
+<div id="canvas-holder">
+    <canvas id="glcanvas" width="600" height="300"></canvas>
+</div>
+</body>
+</html>

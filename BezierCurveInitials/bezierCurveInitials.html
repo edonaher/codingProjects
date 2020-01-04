@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bezier Curves</title>
+
+<script>                                                                     
+    var canvas;    // DOM object corresponding to the canvas
+    var graphics;  // 2D graphics context for drawing on the canvas
+    var numPoints; //num points on line
+    var counter = 0; //for timer
+    var pointList;
+    var timer;
+    function draw() {
+
+        // E control points (linear)
+
+        var e0 = [200, 100];
+        var e1 = [250, 100];
+        var eShape1 = bezierLine(e0,e1);
+        //timer draw 1st line
+        e0 = [200,100];
+        e1 = [200,200];
+		var eShape2 = bezierLine(e0,e1);
+		e0 = [200,150];
+		e1 = [250,150];
+		var eShape3 = bezierLine(e0,e1);
+		e0 = [200,200];
+		e1 = [250,200];
+		var eShape4 = bezierLine(e0,e1);
+
+		//R control points (linear/cubic)
+
+		var r0 = [350,100];
+		var r1 = [350,200];
+		var rShape1 = bezierLine(r0,r1);
+
+		r0 = [350,100];
+		r1 = [450,125];
+		///PROBLEMPOINT
+		var r2 = [270,150];
+		var r3 = [400,200];
+		var rShape2 = bezierCubic(r0, r1, r2, r3);
+
+		//D control points(linear/quadratic)
+		var d0 = [500,100];
+		var d1 = [500, 200];
+		var dShape1 = bezierLine(d0,d1);
+
+		var d2 = [600,150];
+		var dShape2 = bezierQuad(d0,d2,d1);
+		var arrays = [eShape1, [0], eShape2,[0], eShape3,[0] ,eShape4,[0] ,dShape1, [0],dShape2, [0],rShape1, [0],rShape2];
+		var merged = [].concat.apply([], arrays);
+		console.log(merged)
+		return merged;
+        //var r1 = [30, 50];
+
+        //var q1 = [300,50];
+        //var q2 = [330,140];
+
+        // draw 3 bezier curves, all starting at p0 and ending at p1
+        //bezierLine(p0, p1);
+        //bezierQuad(p0, r1, p1);
+        //bezierCubic(p0, q1, q2, p1);
+        // notice the difference between the quadratic and cubic curves
+ 
+    }
+//take in a time t between 0 and 1 (inclusive), 
+//two control points, and return the point on the Bézier line between p0 and p1 
+    function bezierLineHelper(t, p0, p1){
+    	//check that t is between 0 and 1
+    	if(t<0 || t>1){
+    		//if not- invalid input
+    		return;
+    	}
+    	//equations to find x and y
+    	x = (1-t)*p0[0] + t*p1[0];
+    	y = (1-t)*p0[1] + t*p1[1];
+    	var point = [x,y];
+    	return point;
+    }//endlineHelper
+
+//call bezierLineHelper in a loop to create and draw the full line.
+
+	function bezierLine(p0, p1){
+		//draw points for numpixels, so if xdist<ydist draw points along ydist
+		var ydist = Math.abs(p0[1]-p1[1])
+		var xdist = Math.abs(p0[0]-p1[0])
+		if(xdist<ydist){
+			numPoints = ydist;
+		}
+		else{
+			numPoints = xdist;
+		}
+
+		var nextPoint=p0;
+		var t=0;
+		var increment = 1/numPoints;
+		var pointList = [];
+		for(i=0; i<numPoints; i++){
+			//go through t values to find lines
+			nextPoint = bezierLineHelper(t, p0, p1);
+			pointList.push(nextPoint);
+			t = t+increment;
+
+		}
+		//list of points to return to draw shape
+		return pointList;
+	}
+	//return the point ([x,y]) corresponding to t on a quadratic
+	// Bézier curve with 3 control points, using ONLY calls to bezierLineHelper
+	function bezierQuadHelper(t, p0, p1, p2) {
+//Given t, interpolate secondary points between each pair
+		var firstPoint = bezierLineHelper(t, p0, p1);
+		var secondPoint = bezierLineHelper(t, p1, p2);
+//Then locate point on curve by interpolating between the secondary points
+		var newPoint = bezierLineHelper(t, firstPoint, secondPoint);
+		return newPoint;
+//Evaluate for all t between 0 and 1 to complete curve
+
+	}
+	function bezierQuad(p0, p1, p2){
+		//draw points for numpixels, so if xdist<ydist draw points along ydist
+		var ydist = Math.abs(p0[1]-p1[1]) + Math.abs(p1[1]-p2[1])
+		var xdist = Math.abs(p0[0]-p1[0]) + Math.abs(p1[0]-p2[0])
+		if(xdist<ydist){
+			numPoints = ydist;
+		}
+		else{
+			numPoints = xdist;
+		}
+
+		var nextPoint=p0;
+		var t=0;
+		var increment = 1/numPoints;
+		var pointList = [];
+		for(i=0; i<numPoints; i++){
+			//find point at t
+			nextPoint = bezierQuadHelper(t, p0, p1, p2);
+			pointList.push(nextPoint);
+			t = t+increment;
+
+		}
+		return pointList;
+	}//endbezierquad
+
+	//return the point corresponding to t on a cubic Bezier curve with 4 control points
+	function bezierCubicHelper(t, p0, p1, p2, p3) {
+//Given t, interpolate secondary points between each pair
+		var firstPoint = bezierLineHelper(t, p0, p1);
+		var secondPoint = bezierLineHelper(t, p1, p2);
+		var thirdPoint = bezierLineHelper(t, p2, p3);
+//Then locate point on curve by interpolating between the secondary points
+		var newPoint = bezierQuadHelper(t, firstPoint, secondPoint, thirdPoint);
+		return newPoint;
+	}//endbezcubehelper
+function bezierCubic(p0, p1, p2, p3){
+			//draw points for numpixels, so if xdist<ydist draw points along ydist
+		var ydist = Math.abs(p0[1]-p1[1]) + Math.abs(p1[1]-p2[1]) + Math.abs(p2[1]-p3[1])
+		var xdist = Math.abs(p0[0]-p1[0]) + Math.abs(p1[0]-p2[0]) + Math.abs(p2[0]-p3[0])
+		if(xdist<ydist){
+			numPoints = ydist;
+		}
+		else{
+			numPoints = xdist;
+		}
+
+		var nextPoint=p0;
+		var t=0;
+		var increment = 1/numPoints;
+		var pointList = [];
+		for(i=0; i<numPoints; i++){
+			//find point at t
+			nextPoint = bezierCubicHelper(t, p0, p1, p2, p3);
+			pointList.push(nextPoint);
+			t = t+increment;
+		}
+		return pointList;
+}
+    function init() {
+        canvas = document.getElementById("theCanvas");
+        graphics = canvas.getContext("2d");
+        //return list of points to draw
+        pointList = draw();  // draw something on the canvas
+        timer = setInterval(animate, 10);
+    }
+
+    function animate(){
+
+    	first_x = pointList[counter][0]
+    	first_y = pointList[counter][1]
+    	if(first_x==0){
+			//this is a new letter so dont draw
+		}
+		else{
+			//else draw
+			graphics.beginPath();
+			graphics.moveTo(first_x,first_y);
+			next_x = pointList[counter+1][0];
+			next_y = pointList[counter+1][1]
+			graphics.lineTo(next_x,next_y);
+			graphics.stroke();
+		}
+
+		if(counter==pointList.length-3){
+            clearInterval(timer)
+        }
+        counter++;
+       
+    }
+</script>
+
+
+</head>
+<body onload="init()">
+    <canvas id="theCanvas" width="640" height="480"></canvas>
+</body>
+</html>
